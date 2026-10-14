@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: TradeStone
-## Notes: Warlock buttons on the trade window: create a Healthstone and put it in the trade.
+## Notes: Warlock button on the trade window: creates a Healthstone if needed and puts it in the trade.
 ## Author: Ire Xiphre
-## Version: 0.1.0
+## Version: 0.2.0
 
 TradeStone.lua

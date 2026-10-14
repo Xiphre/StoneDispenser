@@ -1,6 +1,7 @@
--- TradeStone: two warlock buttons on the trade window.
---   Create Healthstone: casts the best Create Healthstone you know (secure, needs a click).
---   Trade Healthstone:  puts the best Healthstone in your bags into the first free trade slot.
+-- TradeStone: one warlock button on the trade window.
+--   With a Healthstone in the bags it puts the best one into the first free trade slot.
+--   Without one it casts the best Create Healthstone you know (secure, needs a click),
+--   then puts the new stone into the trade when it appears.
 
 -- Best first. The create spells and the stones they make are in the same order.
 local CREATE_SPELLS = { 11730, 11729, 5699, 6202, 6201 }
@@ -136,44 +137,10 @@ end
 
 -- Buttons -----------------------------------------------------------------
 
-local createButton, tradeButton
-local createPending = false
-
-local function SetButtonEnabled(button, enabled)
-    if enabled then
-        button:Enable()
-    else
-        button:Disable()
-    end
-end
-
--- The create button is protected: its attributes, visibility and enabled
--- state can only change out of combat. In combat, wait for PLAYER_REGEN_ENABLED.
-local function RefreshCreate()
-    if InCombatLockdown() then
-        createPending = true
-        return
-    end
-    createPending = false
-
-    local spell = FindCreateSpell()
-    createButton.spell = spell
-    createButton:SetAttribute("spell", spell)
-    -- Only one Healthstone fits in the bags, so there is no point casting with one there.
-    SetButtonEnabled(createButton, spell ~= nil and FindStone(true) == nil)
-    createButton:SetShown(TradeFrame:IsShown())
-end
-
-local function RefreshTrade()
-    local _, _, itemID = FindStone(false)
-    tradeButton.itemID = itemID
-    SetButtonEnabled(tradeButton, itemID ~= nil and FirstFreeTradeSlot() ~= nil)
-end
-
-local function Refresh()
-    RefreshCreate()
-    RefreshTrade()
-end
+local button
+local refreshPending = false
+-- Set when the button cast Create Healthstone; the new stone goes into the trade.
+local autoTrade = false
 
 local function TradeHealthstone()
     if CursorHasItem() then
@@ -187,68 +154,105 @@ local function TradeHealthstone()
     end
 end
 
+local function TryAutoTrade()
+    if autoTrade and TradeFrame:IsShown() and FindStone(false) and not CursorHasItem() then
+        autoTrade = false
+        TradeHealthstone()
+    end
+end
+
+-- The button is protected: its attributes, visibility and enabled state can
+-- only change out of combat. In combat it keeps its mode until
+-- PLAYER_REGEN_ENABLED.
+local function Refresh()
+    if InCombatLockdown() then
+        refreshPending = true
+        return
+    end
+    refreshPending = false
+
+    local spell = FindCreateSpell()
+    local _, _, itemID = FindStone(true)
+    local enabled
+    -- Only one Healthstone fits in the bags, so with one there we trade it.
+    if itemID then
+        button.mode = "trade"
+        button:SetAttribute("type", nil)
+        button:SetText("Trade Healthstone")
+        enabled = FindStone(false) ~= nil
+    else
+        button.mode = "create"
+        button:SetAttribute("type", "spell")
+        button:SetText("Create & Trade")
+        enabled = spell ~= nil
+    end
+    button.spell, button.itemID = spell, itemID
+    button:SetAttribute("spell", spell)
+    if enabled and FirstFreeTradeSlot() then
+        button:Enable()
+    else
+        button:Disable()
+    end
+    button:SetShown(TradeFrame:IsShown())
+end
+
+-- Runs after the secure click. In create mode the secure template has cast
+-- the spell; in trade mode it did nothing and the trade happens here.
+local function PostClick(self)
+    if self.mode == "trade" then
+        TradeHealthstone()
+    else
+        autoTrade = true
+    end
+end
+
 local function ItemName(itemID)
     return GetItemInfo(itemID) or ("item " .. itemID)
 end
 
-local function ShowTooltip(button)
-    GameTooltip:SetOwner(button, "ANCHOR_TOP")
-    if button == createButton then
-        GameTooltip:SetText("Create Healthstone")
-        if not button.spell then
-            GameTooltip:AddLine("No Create Healthstone spell found.", 1, 0.3, 0.3)
-        else
-            GameTooltip:AddLine("Casts " .. button.spell, 1, 1, 1)
-            if FindStone(true) then
-                GameTooltip:AddLine("You already have a Healthstone.", 1, 0.3, 0.3)
-            end
+local function ShowTooltip(self)
+    GameTooltip:SetOwner(self, "ANCHOR_TOP")
+    GameTooltip:SetText("Healthstone")
+    if self.mode == "trade" then
+        GameTooltip:AddLine("Trades " .. ItemName(self.itemID), 1, 1, 1)
+        if not FindStone(false) then
+            GameTooltip:AddLine("Your Healthstone is already in the trade.", 1, 0.3, 0.3)
         end
+    elseif self.spell then
+        GameTooltip:AddLine("Casts " .. self.spell .. ", then trades the stone", 1, 1, 1)
     else
-        GameTooltip:SetText("Trade Healthstone")
-        if not button.itemID then
-            GameTooltip:AddLine("No Healthstone in your bags.", 1, 0.3, 0.3)
-        else
-            GameTooltip:AddLine("Trades " .. ItemName(button.itemID), 1, 1, 1)
-            if not FirstFreeTradeSlot() then
-                GameTooltip:AddLine("No free trade slot.", 1, 0.3, 0.3)
-            end
-        end
+        GameTooltip:AddLine("No Create Healthstone spell found.", 1, 0.3, 0.3)
+    end
+    if not FirstFreeTradeSlot() then
+        GameTooltip:AddLine("No free trade slot.", 1, 0.3, 0.3)
     end
     GameTooltip:Show()
 end
 
-local function CreateButtons()
-    -- The trade button can live on TradeFrame. The secure button is parented
-    -- to UIParent so TradeFrame does not become protected in combat.
-    tradeButton = CreateFrame("Button", "TradeStoneTradeButton", TradeFrame, "UIPanelButtonTemplate")
-    tradeButton:SetSize(130, 22)
-    tradeButton:SetText("Trade Healthstone")
-    local anchor = TradeFrameCancelButton or TradeFrame
-    tradeButton:SetPoint("TOPRIGHT", anchor, "BOTTOMRIGHT", 0, -4)
-    tradeButton:SetScript("OnClick", TradeHealthstone)
-
-    createButton = CreateFrame("Button", "TradeStoneCreateButton", UIParent,
+local function CreateButton()
+    -- Parented to UIParent, not TradeFrame, so TradeFrame does not become
+    -- protected in combat.
+    button = CreateFrame("Button", "TradeStoneButton", UIParent,
         "SecureActionButtonTemplate,UIPanelButtonTemplate")
-    createButton:SetSize(130, 22)
-    createButton:SetText("Create Healthstone")
-    createButton:SetPoint("RIGHT", tradeButton, "LEFT", -4, 0)
-    createButton:SetFrameStrata(TradeFrame:GetFrameStrata())
-    createButton:SetFrameLevel(TradeFrame:GetFrameLevel() + 10)
+    button:SetSize(140, 22)
+    button:SetPoint("TOPRIGHT", TradeFrameCancelButton or TradeFrame, "BOTTOMRIGHT", 0, -4)
+    button:SetFrameStrata(TradeFrame:GetFrameStrata())
+    button:SetFrameLevel(TradeFrame:GetFrameLevel() + 10)
     -- Newer secure templates only act on key down when ActionButtonUseKeyDown
     -- is on (the default) and ignore mouse-up clicks. Make it act on mouse up.
-    createButton:RegisterForClicks("AnyUp")
-    createButton:SetAttribute("useOnKeyDown", false)
-    createButton:SetAttribute("type", "spell")
-    createButton:Hide()
-
-    for _, button in ipairs({ createButton, tradeButton }) do
-        button:SetMotionScriptsWhileDisabled(true)
-        button:SetScript("OnEnter", ShowTooltip)
-        button:SetScript("OnLeave", GameTooltip_Hide)
-    end
+    button:RegisterForClicks("AnyUp")
+    button:SetAttribute("useOnKeyDown", false)
+    button:SetMotionScriptsWhileDisabled(true)
+    button:SetScript("PostClick", PostClick)
+    button:SetScript("OnEnter", ShowTooltip)
+    button:SetScript("OnLeave", GameTooltip_Hide)
+    button:Hide()
 
     TradeFrame:HookScript("OnShow", Refresh)
-    TradeFrame:HookScript("OnHide", RefreshCreate)
+    TradeFrame:HookScript("OnHide", function()
+        autoTrade = false
+        Refresh()
+    end)
 end
 
 -- Debug -------------------------------------------------------------------
@@ -263,7 +267,7 @@ local function Debug()
     for _, entry in ipairs(ScanSpellbook()) do
         Print(("  %s [%s]"):format(entry.name, tostring(entry.rank)))
     end
-    Print("Create button casts: " .. tostring(FindCreateSpell()))
+    Print("Button casts: " .. tostring(FindCreateSpell()))
     local bag, slot, itemID = FindStone(true)
     if itemID then
         Print(("Best stone: %s (%d) in bag %d slot %d, locked: %s"):format(
@@ -290,7 +294,7 @@ events:SetScript("OnEvent", function(self, event)
         SLASH_TRADESTONE2 = "/ts"
         SlashCmdList.TRADESTONE = Debug
 
-        CreateButtons()
+        CreateButton()
         -- Forever's client lacks some events (e.g. LEARNED_SPELL_IN_TAB), so
         -- register each one on its own and skip the ones it does not know.
         for _, name in ipairs({ "SPELLS_CHANGED", "BAG_UPDATE", "ITEM_LOCK_CHANGED",
@@ -298,10 +302,12 @@ events:SetScript("OnEvent", function(self, event)
             pcall(self.RegisterEvent, self, name)
         end
     elseif event == "PLAYER_REGEN_ENABLED" then
-        if createPending then
-            RefreshCreate()
+        if refreshPending then
+            Refresh()
         end
         return
+    elseif event == "BAG_UPDATE" then
+        TryAutoTrade()
     end
     Refresh()
 end)
