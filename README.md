@@ -2,9 +2,9 @@
 
 A small World of Warcraft addon for warlocks on WoW Forever (Classic-era client, interface 16001).
 
-When the trade window is open it adds one button below it:
+When the trade window is open it adds one button next to the Trade button, in the same style:
 
-- **Trade Healthstone** (you carry a Healthstone): puts the best one from your bags into the first free trade slot.
+- **Trade Stone** (you carry a Healthstone): puts the best one from your bags into the first free trade slot.
 - **Create & Trade** (you don't): casts the best Create Healthstone spell you know, and when the new stone appears puts it into the trade. Casting needs a real click, so this is a secure button. If the trade closes before the cast finishes, nothing is traded.
 
 Healthstones are picked best first: Major (9421), Greater (5510), Healthstone (5509), Lesser (5511), Minor (5512).

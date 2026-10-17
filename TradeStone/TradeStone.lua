@@ -178,7 +178,7 @@ local function Refresh()
     if itemID then
         button.mode = "trade"
         button:SetAttribute("type", nil)
-        button:SetText("Trade Healthstone")
+        button:SetText("Trade Stone")
         enabled = FindStone(false) ~= nil
     else
         button.mode = "create"
@@ -186,6 +186,10 @@ local function Refresh()
         button:SetText("Create & Trade")
         enabled = spell ~= nil
     end
+    -- Fit the label, but never narrower than Blizzard's Trade button.
+    local minWidth = TradeFrameTradeButton and TradeFrameTradeButton:GetWidth() or 0
+    local text = button:GetFontString()
+    button:SetWidth(math.max(minWidth, 85, text and text:GetStringWidth() + 24 or 0))
     button.spell, button.itemID = spell, itemID
     button:SetAttribute("spell", spell)
     if enabled and FirstFreeTradeSlot() then
@@ -193,6 +197,10 @@ local function Refresh()
     else
         button:Disable()
     end
+    -- UI skins (EllesmereUI) draw the trade window as an overlay above even
+    -- the DIALOG strata, which hides a button placed inside it. The button
+    -- only shows while trading, so put it on the top strata.
+    button:SetFrameStrata("TOOLTIP")
     button:SetShown(TradeFrame:IsShown())
 end
 
@@ -234,10 +242,16 @@ local function CreateButton()
     -- protected in combat.
     button = CreateFrame("Button", "TradeStoneButton", UIParent,
         "SecureActionButtonTemplate,UIPanelButtonTemplate")
-    button:SetSize(140, 22)
-    button:SetPoint("TOPRIGHT", TradeFrameCancelButton or TradeFrame, "BOTTOMRIGHT", 0, -4)
-    button:SetFrameStrata(TradeFrame:GetFrameStrata())
-    button:SetFrameLevel(TradeFrame:GetFrameLevel() + 10)
+    -- Same style and height as Blizzard's Trade/Cancel buttons, left of Trade.
+    if TradeFrameTradeButton then
+        -- A hidden frame can report a size of 0 at login, so keep a floor.
+        button:SetSize(math.max(TradeFrameTradeButton:GetWidth(), 85),
+            math.max(TradeFrameTradeButton:GetHeight(), 22))
+        button:SetPoint("RIGHT", TradeFrameTradeButton, "LEFT", -4, 0)
+    else
+        button:SetSize(120, 22)
+        button:SetPoint("TOPRIGHT", TradeFrame, "BOTTOMRIGHT", 0, -4)
+    end
     -- Newer secure templates only act on key down when ActionButtonUseKeyDown
     -- is on (the default) and ignore mouse-up clicks. Make it act on mouse up.
     button:RegisterForClicks("AnyUp")
