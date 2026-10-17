@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.4.0 (unreleased)
+## 0.5.0 (unreleased)
+
+- If you carry a lower-rank Healthstone than the best one you can create, the button offers Create & Trade and trades the new, better stone. The weaker stone stays in your bags.
+
+## 0.4.0
 
 - Key binding under Esc > Key Bindings > AddOns > TradeStone: one key creates and trades a Healthstone, same as clicking the button.
 - The button (and key) only acts while a trade window is open.

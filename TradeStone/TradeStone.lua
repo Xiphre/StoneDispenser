@@ -119,12 +119,14 @@ local function ScanSpellbook()
     return found
 end
 
--- Returns the spell value for the secure button's "spell" attribute.
+-- Returns the spell value for the secure button's "spell" attribute, and its
+-- rank as an index into CREATE_SPELLS / STONE_ITEMS (nil when found only by
+-- the spellbook fallback).
 local function FindCreateSpell()
     if IsSpellKnown then
-        for _, spellID in ipairs(CREATE_SPELLS) do
+        for rank, spellID in ipairs(CREATE_SPELLS) do
             if IsSpellKnown(spellID) then
-                return GetSpellName(spellID)
+                return GetSpellName(spellID), rank
             end
         end
     end
@@ -144,7 +146,8 @@ end
 
 local button
 local refreshPending = false
--- Set when the button cast Create Healthstone; the new stone goes into the trade.
+-- Set when the button cast Create Healthstone; the new stone goes into the
+-- trade. Holds the item ID being made when known, otherwise true.
 local autoTrade = false
 
 local function TradeHealthstone()
@@ -161,7 +164,13 @@ local function TradeHealthstone()
 end
 
 local function TryAutoTrade()
-    if autoTrade and TradeFrame:IsShown() and FindStone(false) and not CursorHasItem() then
+    if not autoTrade or not TradeFrame:IsShown() or CursorHasItem() then
+        return
+    end
+    local _, _, itemID = FindStone(false)
+    -- With a weaker stone already in the bags, wait for the new one: the
+    -- soul shard used by the cast also fires BAG_UPDATE.
+    if itemID and (autoTrade == true or itemID == autoTrade) then
         autoTrade = false
         TradeHealthstone()
     end
@@ -177,11 +186,14 @@ local function Refresh()
     end
     refreshPending = false
 
-    local spell = FindCreateSpell()
+    local spell, spellRank = FindCreateSpell()
     local _, _, itemID = FindStone(true)
     local enabled
-    -- Only one Healthstone fits in the bags, so with one there we trade it.
-    if itemID then
+    -- Each stone is unique, so with one in the bags we trade it, unless we
+    -- know a better rank: then make that one (the weaker stone stays put).
+    local better = itemID and spellRank and spellRank < STONE_RANK[itemID]
+    button.target = spellRank and STONE_ITEMS[spellRank]
+    if itemID and not better then
         button.mode = "trade"
         button:SetAttribute("type", nil)
         button:SetText("Trade Stone")
@@ -217,7 +229,7 @@ local function PostClick(self)
     if self.mode == "trade" then
         TradeHealthstone()
     else
-        autoTrade = true
+        autoTrade = self.target or true
     end
 end
 
@@ -235,6 +247,10 @@ local function ShowTooltip(self)
         end
     elseif self.spell then
         GameTooltip:AddLine("Casts " .. self.spell .. ", then trades the stone", 1, 1, 1)
+        if self.itemID then
+            GameTooltip:AddLine("Your " .. ItemName(self.itemID) .. " is a lower rank and stays in your bags.",
+                1, 0.82, 0)
+        end
     else
         GameTooltip:AddLine("No Create Healthstone spell found.", 1, 0.3, 0.3)
     end
