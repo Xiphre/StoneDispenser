@@ -2,6 +2,6 @@
 ## Title: TradeStone
 ## Notes: Warlock button on the trade window: creates a Healthstone if needed and puts it in the trade.
 ## Author: Ire Xiphre
-## Version: 0.3.0
+## Version: 0.4.0
 
 TradeStone.lua

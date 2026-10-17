@@ -15,6 +15,10 @@ The addon does nothing on other classes.
 
 Copy the `TradeStone` folder into the game's `Interface\AddOns` folder and enable it on the character screen.
 
+## Key binding
+
+Bind a key under Esc > Key Bindings > AddOns > TradeStone > "Create / Trade Healthstone". Pressing it does the same as clicking the button: when someone opens a trade with you, one press creates a Healthstone (if you have none) and puts it into the trade. The key does nothing when no trade window is open.
+
 ## Commands
 
 - `/ts` or `/tradestone` prints what the addon found: create spells, spellbook entries, the chosen spell and the best stone in your bags.

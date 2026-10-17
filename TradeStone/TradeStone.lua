@@ -2,6 +2,11 @@
 --   With a Healthstone in the bags it puts the best one into the first free trade slot.
 --   Without one it casts the best Create Healthstone you know (secure, needs a click),
 --   then puts the new stone into the trade when it appears.
+--   Bindings.xml adds a key binding that clicks the button.
+
+-- Labels for Esc > Key Bindings > AddOns.
+BINDING_HEADER_TRADESTONE = "TradeStone"
+_G["BINDING_NAME_CLICK TradeStoneButton:LeftButton"] = "Create / Trade Healthstone"
 
 -- Best first. The create spells and the stones they make are in the same order.
 local CREATE_SPELLS = { 11730, 11729, 5699, 6202, 6201 }
@@ -143,7 +148,8 @@ local refreshPending = false
 local autoTrade = false
 
 local function TradeHealthstone()
-    if CursorHasItem() then
+    -- The key binding can fire with no trade open; never leave a stone on the cursor.
+    if CursorHasItem() or not TradeFrame:IsShown() then
         return
     end
     local bag, slot = FindStone(false)
@@ -192,7 +198,8 @@ local function Refresh()
     button:SetWidth(math.max(minWidth, 85, text and text:GetStringWidth() + 24 or 0))
     button.spell, button.itemID = spell, itemID
     button:SetAttribute("spell", spell)
-    if enabled and FirstFreeTradeSlot() then
+    -- Disabled outside a trade, so the key binding does nothing then.
+    if enabled and TradeFrame:IsShown() and FirstFreeTradeSlot() then
         button:Enable()
     else
         button:Disable()
