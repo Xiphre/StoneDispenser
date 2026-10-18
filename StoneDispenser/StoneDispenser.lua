@@ -1,12 +1,12 @@
--- TradeStone: one warlock button on the trade window.
+-- Stone Dispenser: one warlock button on the trade window.
 --   With a Healthstone in the bags it puts the best one into the first free trade slot.
 --   Without one it casts the best Create Healthstone you know (secure, needs a click),
 --   then puts the new stone into the trade when it appears.
 --   Bindings.xml adds a key binding that clicks the button.
 
 -- Labels for Esc > Key Bindings > AddOns.
-BINDING_HEADER_TRADESTONE = "TradeStone"
-_G["BINDING_NAME_CLICK TradeStoneButton:LeftButton"] = "Create / Trade Healthstone"
+BINDING_HEADER_STONEDISPENSER = "Stone Dispenser"
+_G["BINDING_NAME_CLICK StoneDispenserButton:LeftButton"] = "Create / Trade Healthstone"
 
 -- Best first. The create spells and the stones they make are in the same order.
 local CREATE_SPELLS = { 11730, 11729, 5699, 6202, 6201 }
@@ -29,7 +29,7 @@ local SpellBook = C_SpellBook or {}
 local GetSpellName = GetSpellInfo or (C_Spell and C_Spell.GetSpellName)
 
 local function Print(msg)
-    DEFAULT_CHAT_FRAME:AddMessage("|cff9482c9TradeStone|r: " .. msg)
+    DEFAULT_CHAT_FRAME:AddMessage("|cff9482c9Stone Dispenser|r: " .. msg)
 end
 
 -- Bags --------------------------------------------------------------------
@@ -263,7 +263,7 @@ end
 local function CreateButton()
     -- Parented to UIParent, not TradeFrame, so TradeFrame does not become
     -- protected in combat.
-    button = CreateFrame("Button", "TradeStoneButton", UIParent,
+    button = CreateFrame("Button", "StoneDispenserButton", UIParent,
         "SecureActionButtonTemplate,UIPanelButtonTemplate")
     -- Same style and height as Blizzard's Trade/Cancel buttons, left of Trade.
     if TradeFrameTradeButton then
@@ -327,9 +327,8 @@ events:SetScript("OnEvent", function(self, event)
             self:UnregisterAllEvents()
             return
         end
-        SLASH_TRADESTONE1 = "/tradestone"
-        SLASH_TRADESTONE2 = "/ts"
-        SlashCmdList.TRADESTONE = Debug
+        SLASH_STONEDISPENSER1 = "/stonedispenser"
+        SlashCmdList.STONEDISPENSER = Debug
 
         CreateButton()
         -- Forever's client lacks some events (e.g. LEARNED_SPELL_IN_TAB), so

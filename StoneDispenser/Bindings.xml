@@ -1,0 +1,4 @@
+<Bindings>
+    <!-- Clicks the Stone Dispenser button, so a key does the same as clicking it. -->
+    <Binding name="CLICK StoneDispenserButton:LeftButton" header="STONEDISPENSER" category="ADDONS"/>
+</Bindings>

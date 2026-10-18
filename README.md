@@ -1,4 +1,4 @@
-# TradeStone
+# Stone Dispenser
 
 A small World of Warcraft addon for warlocks on WoW Forever (Classic-era client, interface 16001).
 
@@ -14,19 +14,27 @@ The addon does nothing on other classes.
 
 ## Install
 
-Copy the `TradeStone` folder into the game's `Interface\AddOns` folder and enable it on the character screen.
+Copy the `StoneDispenser` folder into the game's `Interface\AddOns` folder and enable it on the character screen.
 
 ## Key binding
 
-Bind a key under Esc > Key Bindings > AddOns > TradeStone > "Create / Trade Healthstone". Pressing it does the same as clicking the button: when someone opens a trade with you, one press creates a Healthstone (if you have none) and puts it into the trade. The key does nothing when no trade window is open.
+Bind a key under Esc > Key Bindings > AddOns > Stone Dispenser > "Create / Trade Healthstone". Pressing it does the same as clicking the button: when someone opens a trade with you, one press creates a Healthstone (if you have none) and puts it into the trade. The key does nothing when no trade window is open.
 
 ## Commands
 
-- `/ts` or `/tradestone` prints what the addon found: create spells, spellbook entries, the chosen spell and the best stone in your bags.
+- `/stonedispenser` prints what the addon found: create spells, spellbook entries, the chosen spell and the best stone in your bags.
 
 ## Notes
 
 - The button can only switch between creating and trading out of combat. If your bags change in combat, it switches when combat ends.
-- Spell IDs and names on Forever may differ from Classic. If the create button picks the wrong spell, run `/ts` and check the output.
+- Spell IDs and names on Forever may differ from Classic. If the create button picks the wrong spell, run `/stonedispenser` and check the output.
 
 See [CHANGELOG.md](CHANGELOG.md) for the version history.
+
+## Building a release
+
+Run `build.ps1` in PowerShell. It writes `dist\StoneDispenser-<version>.zip`, with the version taken from `StoneDispenser.toc`. Upload that zip to CurseForge.
+
+## License
+
+MIT, see [LICENSE](LICENSE).

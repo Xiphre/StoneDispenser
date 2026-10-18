@@ -1,7 +1,8 @@
 ## Interface: 16001
-## Title: TradeStone
+## Title: Stone Dispenser
 ## Notes: Warlock button on the trade window: creates a Healthstone if needed and puts it in the trade.
 ## Author: Ire Xiphre
-## Version: 0.5.0
+## Version: 1.0.0
+## IconTexture: Interface\Icons\INV_Stone_04
 
-TradeStone.lua
+StoneDispenser.lua

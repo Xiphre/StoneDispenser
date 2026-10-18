@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.5.0 (unreleased)
+## 1.0.0 (unreleased)
+
+- First public release, on CurseForge. Renamed from TradeStone to Stone Dispenser (addon folder `StoneDispenser`); key bindings need to be set again. MIT license.
+- The slash command is now `/stonedispenser`; `/ts` and `/tradestone` were removed.
+
+## 0.5.0
 
 - If you carry a lower-rank Healthstone than the best one you can create, the button offers Create & Trade and trades the new, better stone. The weaker stone stays in your bags.
 
